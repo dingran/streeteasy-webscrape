@@ -209,7 +209,7 @@ class StreetEasyWebScraping:
             bldg_list = list(set(bldg_list))
 
             bldg_list_extended = []
-            for i in [1, 2, 3]:
+            for i in [2, 3]:
                 bldg_list_extended.extend([x + '#tab_building_detail={}'.format(i) for x in bldg_list])
             self.building_url_list = bldg_list_extended
             print '{}: length of extended building url list is {}'.format(func_name, len(bldg_list_extended))
@@ -282,12 +282,22 @@ class StreetEasyWebScraping:
                 continue
 
             if method == 'direct' or method.startswith('d'):
-                page = urllib2.urlopen(u).read()
+                try:
+                    page = urllib2.urlopen(u).read()
+                except Exception as inst:
+                    print inst
+                    print u
+                    continue
 
             elif method.startswith('s'):
-                with closing(webdriver.PhantomJS()) as browser:
-                    browser.get(u)
-                    page = browser.page_source
+                try:
+                    with closing(webdriver.PhantomJS()) as browser:
+                        browser.get(u)
+                        page = browser.page_source
+                except Exception as inst:
+                    print inst
+                    print u
+                    continue
             else:
                 page = ''
                 assert 0

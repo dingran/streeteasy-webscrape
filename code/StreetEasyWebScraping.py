@@ -24,17 +24,15 @@ def print_sep():
 class StreetEasyWebScraping:
     def __init__(self, output_folder=None):
         if not output_folder:
-            output_folder = '/Users/ran/Dropbox/streeteasy_webscrape/output'
-            if platform.system() == 'Linux':
-                output_folder = '/home/dingran/Dropbox/streeteasy_webscrape/output'
+            output_folder = '/Users/dingran/github/streeteasy-webscrape/output'
 
         self.output_folder = output_folder
         folder_list = [self.output_folder]
 
         self.domain = 'http://streeteasy.com/'
         self.parser = 'lxml'
-        # self.time_string = datetime.datetime.now().strftime("%Y-%m-%d")
-        self.time_string = '2016-09-26'
+        self.time_string = datetime.datetime.now().strftime("%Y-%m-%d")
+        # self.time_string = '2016-09-26'
 
         self.active_listing_search_condition_string = {'active_sales': 'for-sale/nyc/type:D1',  # ,P1',
                                                        'active_rentals': 'for-rent/nyc/type:D1',  # ,P1'
@@ -123,6 +121,16 @@ class StreetEasyWebScraping:
         top_url = urlparse.urljoin(self.domain, self.active_listing_search_condition_string[listing_type])
         print '{}: opening {}'.format(func_name, top_url)
         top_page = urllib2.urlopen(top_url).read()
+        # with closing(webdriver.Chrome()) as browser:
+        #     browser.get(top_url)
+        #     top_page = browser.page_source
+        #     print top_page
+        #
+        #     with open('debug.html', 'w') as p:
+        #         if type(top_page) is unicode:
+        #             p.write(top_page.encode('ascii', errors='ignore'))
+        #         else:
+        #             p.write(top_page)
         soup_tp = BeautifulSoup(top_page, 'lxml')
 
         result_count = int(soup_tp.find(class_='result-count first').get_text().replace(',', ''))

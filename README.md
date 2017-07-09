@@ -4,10 +4,5 @@ This is an exercise to try out Selenium and BeautifulSoup and to figure out a pr
 
 Most of the functionality is implemented in [StreetEasyWebScraping.py](code/StreetEasyWebScraping.py)
 
-Todo:
-
-- [ ] moved from Linux to Mac recent, try get this working on new machine
-
-- [ ] migrate to python 3.6
-
-- [ ] add non-embarrassing documentation
+Update on 2017-07-09
+StreetEasy has strated to use Distill Networks to protect agains scraping, I don't think any of these simple scraping tools will work well...

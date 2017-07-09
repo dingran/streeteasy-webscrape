@@ -1,8 +1,10 @@
 Toy project to scrape listings on StreetEasy so I don't have to troll their site manually to find apartment to rent. ;)
 
-This is an exercise to try out Selenium and BeautifulSoup and to figure out a practical configuration of a relatively simple web scraper.
+This was an exercise to try out Selenium and BeautifulSoup and to figure out a practical configuration of a relatively simple web scraper.
 
-Most of the functionality is implemented in [StreetEasyWebScraping.py](code/StreetEasyWebScraping.py)
+Most of the functionality is implemented in [StreetEasyWebScraping.py](code/StreetEasyWebScraping.py). Another similar project is https://github.com/dingran1019/angellist-webscrape
+
+
 
 
 Update on 2017-07-09:

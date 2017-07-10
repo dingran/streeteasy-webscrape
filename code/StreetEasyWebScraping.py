@@ -6,6 +6,7 @@ import glob
 import time
 import random
 from bs4 import BeautifulSoup
+import urlparse
 import logging
 # from progressbar import Bar, ETA, Percentage, ProgressBar, RotatingMarker, Timer
 from random import shuffle
@@ -249,7 +250,7 @@ class StreetEasyWebScraping:
         print_sep()
         print('{}: listing_type == {}'.format(func_name, listing_type))
 
-        top_url = self.domain + self.active_listing_search_condition_string[listing_type]
+        top_url = urlparse.urljoin(self.domain, self.active_listing_search_condition_string[listing_type])
         print('{}: opening {}'.format(func_name, top_url))
 
         # top_page = urllib2.urlopen(top_url).read()

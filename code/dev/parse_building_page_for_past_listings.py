@@ -29,5 +29,5 @@ bldg_folder = os.path.join(working_dir, '{}_bldgs'.format(s))
 
 fname = os.path.join('building_111-murray-street#tab_building_detail=2.html')
 
-page = 
+# page =
 

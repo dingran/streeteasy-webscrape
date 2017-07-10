@@ -5,24 +5,15 @@ import sys
 import glob
 import time
 import random
-import urllib2
-import datetime
 from bs4 import BeautifulSoup
-import urlparse
 import logging
-import pandas as pd
-from progressbar import Bar, ETA, Percentage, ProgressBar, RotatingMarker, Timer
-from contextlib import closing
-from selenium import webdriver
+# from progressbar import Bar, ETA, Percentage, ProgressBar, RotatingMarker, Timer
 from random import shuffle
-import platform
-import shutil
+from tqdm import tqdm
 
-import numpy as np
 import colorama
 import datetime
 import pandas as pd
-from bs4 import BeautifulSoup
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -70,7 +61,7 @@ def calc_pause(base_seconds=3., variable_seconds=5.):
     return base_seconds + random.random() * variable_seconds
 
 
-def set_pause(kind=1, t=None, t_limit = 55):
+def set_pause(kind=1, t=None, t_limit=55):
     log_time('info')
     if t is not None:
         kind_str = 'specific'
@@ -258,7 +249,7 @@ class StreetEasyWebScraping:
         print_sep()
         print('{}: listing_type == {}'.format(func_name, listing_type))
 
-        top_url = urlparse.urljoin(self.domain, self.active_listing_search_condition_string[listing_type])
+        top_url = self.domain + self.active_listing_search_condition_string[listing_type]
         print('{}: opening {}'.format(func_name, top_url))
 
         # top_page = urllib2.urlopen(top_url).read()
@@ -294,11 +285,9 @@ class StreetEasyWebScraping:
                 return
 
         list_of_links = []
-        widgets = ['pull_active_listing', ': ', Percentage(), ' ', Bar(), ' ', ETA()]
-        pbar = ProgressBar(widgets=widgets, maxval=page_count).start()
-        counter = 0
+        print('pull_active_listing')
         driver = init_driver()
-        for i in range(1, page_count + 1):
+        for i in tqdm(range(1, page_count + 1)):
             # for i in range(1, 3):
 
             page_url = top_url + '?page={}&sort_by=listed_desc'.format(i)
@@ -318,10 +307,7 @@ class StreetEasyWebScraping:
                 href = e.find(class_='details-title').find('a').attrs['href']
                 # print href
                 list_of_links.append(urlparse.urljoin(self.domain, href))
-            # print i, len(list_of_links), len(set(list_of_links))
-            counter += 1
-            pbar.update(counter)
-        pbar.finish()
+                # print i, len(list_of_links), len(set(list_of_links))
         quit_driver(driver)
 
         # print len(set(list_of_links))
@@ -413,27 +399,19 @@ class StreetEasyWebScraping:
                 assert 0  # cann't translate back
             return url
 
-    def download_pages(self, url_list, output_folder, method='direct', overwrite=False, enable_pbar=True):
+    def download_pages(self, url_list, output_folder, method='direct', overwrite=False):
         shuffle(url_list)
 
         func_name = 'download_pages (output_folder=={}, method=={})'.format(output_folder, method)
         print_sep()
         print(func_name)
 
-        if enable_pbar:
-            widgets = ['Downloading files', ': ', Percentage(), ' ', Bar(), ' ', ETA()]
-            pbar = ProgressBar(widgets=widgets, maxval=len(url_list)).start()
-
-        counter = 0
         file_skipped = []
         file_added = []
 
         driver = init_driver()
-        for u in url_list:
-            counter += 1
-            if enable_pbar:
-                pbar.update(counter)
-                sys.stdout.flush()
+        print('Downloading files')
+        for u in tqdm(url_list):
             # page_filename_old = os.path.join(output_folder, self.url_to_basefname_transformation(url=u, method='old'))
             page_filename = os.path.join(output_folder, self.url_to_basefname_transformation(url=u, method='new'))
 
@@ -446,46 +424,39 @@ class StreetEasyWebScraping:
                 file_skipped.append(page_filename)
                 continue
 
-            if method == 'direct' or method.startswith('d'):
-                try:
-                    page = urllib2.urlopen(u).read()
-                except Exception as inst:
-                    print(inst)
-                    print(u)
-                    continue
-
-            elif method.startswith('s'):
-
+            try:
                 random_pause()
                 load_url(driver, u)
                 page = driver.page_source
-
-            else:
+            except:
                 page = ''
-                assert 0
+                log_time('error')
+                print('failed to load {}'.format(u))
 
             file_added.append(page_filename)
-            with open(page_filename, 'w') as p:
-                if type(page) is unicode:
-                    p.write(page.encode('ascii', errors='ignore'))
-                else:
+
+            if sys.version_info[0] == 2:
+                with open(page_filename, 'w') as p:
+                    if type(page) is unicode:
+                        p.write(page.encode('ascii', errors='ignore'))
+                    else:
+                        p.write(page)
+            else:
+                with open(page_filename, 'w', encoding='utf-8') as p:
                     p.write(page)
 
         quit_driver(driver)
-        if enable_pbar:
-            pbar.finish()
 
         return {'file_added': file_added, 'file_skipped': file_skipped}
 
-    def download_listing_pages(self, listing_type='active_sales', overwrite=False, enable_pbar=True):
+    def download_listing_pages(self, listing_type='active_sales', overwrite=False):
         assert self.url_list[listing_type]  # not empty
         result = self.download_pages(self.url_list[listing_type],
                                      self.listing_page_storage_foldername[listing_type],
-                                     overwrite=overwrite,
-                                     enable_pbar=enable_pbar)
-        print
-        'download active listing pages: added {} files, skipped {} files'.format(len(result['file_added']),
-                                                                                 len(result['file_skipped']))
+                                     overwrite=overwrite)
+        print(
+            'download active listing pages: added {} files, skipped {} files'.format(len(result['file_added']),
+                                                                                     len(result['file_skipped'])))
 
     def download_building_pages(self, overwrite=False, enable_pbar=True):
         assert self.building_url_list  # not empty
@@ -493,17 +464,14 @@ class StreetEasyWebScraping:
         result = self.download_pages(self.building_url_list,
                                      self.building_page_storage_foldername,
                                      method='s',
-                                     overwrite=overwrite,
-                                     enable_pbar=enable_pbar)
-        print
-        'download building pages: added {} files, skipped {} files'.format(len(result['file_added']),
-                                                                           len(result['file_skipped']))
+                                     overwrite=overwrite)
+        print('download building pages: added {} files, skipped {} files'.format(len(result['file_added']),
+                                                                                 len(result['file_skipped'])))
 
-    def parse_building_page(self, overwrite=True, enable_pbar=True):
+    def parse_building_page(self, overwrite=True):
         func_name = 'parse_building_page'
         print_sep()
-        print
-        func_name
+        print(func_name)
 
         latest_building_page_folder = self.find_latest_file_or_folder(self.building_page_storage_foldername_template)
 
@@ -520,23 +488,13 @@ class StreetEasyWebScraping:
         for listing_type in keys:
             output_fname = self.url_list_fname[listing_type]
             if not overwrite and os.path.exists(output_fname):
-                print
-                'output file exists, and not overwriting, returning...'
+                print('output file exists, and not overwriting, returning...')
                 return
 
             f_list = file_list_to_use[listing_type]
-            if enable_pbar:
-                widgets = ['{}'.format(func_name), ': ', Percentage(), ' ', Bar(), ' ', ETA()]
-                pbar = ProgressBar(widgets=widgets,
-                                   maxval=len(file_list_to_use[keys[0]]) + len(file_list_to_use[keys[1]])).start()
-            counter = 0
-
-            for f in f_list:
+            print(func_name)
+            for f in tqdm(f_list):
                 f_path = os.path.join(latest_building_page_folder, f)
-
-                counter += 1
-                if enable_pbar:
-                    pbar.update(counter)
 
                 with open(f_path, 'r') as fi:
                     page = fi.read()
@@ -562,25 +520,20 @@ class StreetEasyWebScraping:
                             # print result.group(i)
                         self.url_list[listing_type].append(urlparse.urljoin(self.domain, e('a')[0]['href']))
 
-            print
-            '{} ({}): done, writing output file {}'.format(func_name, listing_type, self.url_list_fname[
-                listing_type])
+            print('{} ({}): done, writing output file {}'.format(func_name, listing_type, self.url_list_fname[
+                listing_type]))
             with open(output_fname, 'w') as f:
                 f.write('\n'.join(self.url_list[listing_type]))
-            if enable_pbar:
-                pbar.finish()
 
     def parse_listing_page(self, listing_type='active_sales', overwrite=True):
         func_name = 'parse_listing_page ({})'.format(listing_type)
         print_sep()
-        print
-        func_name
+        print(func_name)
 
         output_fname = self.listing_analysis_result_fname[listing_type]
 
         if not overwrite and os.path.exists(output_fname):
-            print
-            'output file exists, and not overwriting, returning...'
+            print('output file exists, and not overwriting, returning...')
             return
 
         latest_page_storage_folder = self.find_latest_file_or_folder(
@@ -591,20 +544,13 @@ class StreetEasyWebScraping:
             file_list.remove('.DS_Store')
         file_list = [os.path.join(latest_page_storage_folder, x) for x in file_list]
 
-        print
-        '{}: {} pages to parse'.format(func_name, len(file_list))
+        print('{}: {} pages to parse'.format(func_name, len(file_list)))
 
         info_list = []
-        widgets = ['{}'.format(func_name), ': ', Percentage(), ' ', Bar(), ' ', ETA()]
-        pbar = ProgressBar(widgets=widgets, maxval=len(file_list)).start()
-        counter = 0
-        for u in file_list:
-            counter += 1
-            pbar.update(counter)
-
+        print(func_name)
+        for u in tqdm(file_list):
             if 'active' in listing_type and (('sale' in os.path.basename(u)) or ('rent' in os.path.basename(u))):
-                print
-                'abnormal link', u
+                print('abnormal link', u)
                 continue
 
             with open(u, 'r') as f:
@@ -619,10 +565,8 @@ class StreetEasyWebScraping:
             try:
                 address = main_info.h1.a.string
             except:
-                print
-                u
-                print
-                main_info
+                print(u)
+                print(main_info)
 
             try:
                 sep_address = re.compile(r'(.*)#(.*)')
@@ -668,8 +612,7 @@ class StreetEasyWebScraping:
                 info['monthly_charge'] = sum(total_mc)
             except:
                 url = self.url_to_basefname_transformation(fname=u)
-                print
-                url
+                print(url)
                 sys.exit(0)
                 pass
 
@@ -678,11 +621,9 @@ class StreetEasyWebScraping:
                 info['days_on_market'] = int(
                     dom.search(vitals.find('h6', string=re.compile('Days')).parent.get_text()).group(1))
             except:
-                print
-                vitals.find('h6', string=re.compile('Days'))
+                print(vitals.find('h6', string=re.compile('Days')))
                 url = self.url_to_basefname_transformation(fname=u)
-                print
-                url
+                print(url)
                 sys.exit(0)
                 pass
 
@@ -724,12 +665,10 @@ class StreetEasyWebScraping:
             try:
                 info['url'] = self.url_to_basefname_transformation(fname=u)
             except:
-                print
-                u
+                print(u)
                 sys.exit(0)
 
             info_list.append(info)
-        pbar.finish()
 
         info_df = pd.DataFrame(info_list)
         info_df.to_csv(output_fname)

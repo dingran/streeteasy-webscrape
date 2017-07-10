@@ -1,10 +1,8 @@
 import StreetEasyWebScraping as sews
-import sys
 
-# test basical initialization
 proj1 = sews.StreetEasyWebScraping()
 
-print proj1
+print(proj1)
 
 analysis_overwrite = True
 download_overwrite = False
@@ -27,14 +25,12 @@ proj1.download_listing_pages(listing_type='past_sales', overwrite=download_overw
 proj1.download_listing_pages(listing_type='past_rentals', overwrite=download_overwrite)
 
 
-sys.exit(0)
-
 proj1.parse_listing_page(listing_type='active_sales', overwrite=analysis_overwrite)
 proj1.parse_listing_page(listing_type='active_rentals', overwrite=analysis_overwrite)
 proj1.parse_listing_page(listing_type='past_sales', overwrite=analysis_overwrite)
 proj1.parse_listing_page(listing_type='past_rentals', overwrite=analysis_overwrite)
 
-print proj1
+print(proj1)
 
 #proj1.download_building_pages(overwrite=False)
 

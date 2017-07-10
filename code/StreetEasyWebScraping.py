@@ -258,7 +258,6 @@ class StreetEasyWebScraping:
         driver = init_driver()
         load_url(driver, top_url)
         top_page = driver.page_source
-        quit_driver(driver)
 
         # with closing(webdriver.Chrome()) as browser:
         #     browser.get(top_url)
@@ -287,7 +286,6 @@ class StreetEasyWebScraping:
 
         list_of_links = []
         print('pull_active_listing')
-        driver = init_driver()
         for i in tqdm(range(1, page_count + 1)):
             # for i in range(1, 3):
 
